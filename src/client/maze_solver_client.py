@@ -19,19 +19,7 @@ queue_account_key = 'mxP5vuDMAwrFVBwrbS+WkcmxH780PR/FfoxGKsW6DIPSnRhbshdhw43+b0S
 queue_service = QueueService(queue_account_name, queue_account_key)
 queue_name = 'btpqueue'
 
-while(True):
-    # Get the messages from the queue.
-    messages = queue_service.get_messages(queue_name, num_messages=5, visibility_timeout=5*60)
-    for message in messages:
-        blob_name = message.content
-        print('Solving the maze with name ' + blob_name)
-        image_binary = pull_image_from_blob(blob_name)
-        solved_image = solve_maze(image_binary)
-        upload_to_blob(blob_name, solved_image)
-        queue_service.delete_message(queue_name, message.id, message.pop_receipt)
-    
-    # Sleep for 10 seconds.
-    time.sleep(10)
+use_local = True
 
 # Pulls the image from azure blob storage.
 def pull_image_from_blob(blob_name):
@@ -70,11 +58,11 @@ def solve_maze(image):
     solution_image = cv2.merge([b,g,r]).astype(np.uint8)
     return solution_image
 
-# uploads the solution image to azure blob storage.
-def upload_to_blob(blob_name, solution_image):
+# uploads the image to azure blob storage.
+def upload_to_blob(blob_name, image):
     # Create a file in Documents to test the upload and download.
-    local_file_name = "result_" + blob_name + ".jpg"
-    cv2.imwrite(local_file_name, solution_image)
+    local_file_name = blob_name + ".jpg"
+    cv2.imwrite(local_file_name, image)
     local_path=os.path.expanduser(".")
     full_path_to_file =os.path.join(local_path, local_file_name)
 
@@ -85,6 +73,48 @@ def upload_to_blob(blob_name, solution_image):
     # Upload the created file if it doesn't exist, use local_file_name for the blob name.
     if not len(block_blob_service.list_blobs(container_name, local_file_name)):
         block_blob_service.create_blob_from_path(container_name, local_file_name, full_path_to_file)
+
+# Loads the images from a folder.
+def load_images_from_folder(folder):
+    images = [[]]
+    for filename in os.listdir(folder):
+        img = cv2.imread(os.path.join(folder, filename))
+        if img is not None:
+            filename = os.path.splitext(filename)[0] # Remove extension.
+            images.append([filename, img])
+    return images
+
+def solve():
+    images_path = 'images/'
+    images = load_images_from_folder(images_path)
+
+    for image in images:
+        if use_local:
+            solution_image = solve_maze(image[1])
+            cv2.imwrite("result_" + image[0] +".jpg", solution_image)
+        else:
+            print('uploading image: ' + image[0])
+            upload_to_blob(image[0], image[1])
     
-    # Delete the temporary solution image after upload
-    os.remove(full_path_to_file)
+    if use_local:
+        return
+
+    print('Images uploaded successfully!')
+    time.sleep(10*len(images))
+    print('Downloading solved images from Azure Blob Storage!')
+    for image in images:
+        retry_count = 0
+        while retry_count <= 10:
+            if not len(block_blob_service.list_blobs(container_name, image[0] + '.jpg')):
+                retry_count += 1
+                time.sleep(10)
+            else:
+                solution_image_name = 'solution_' + image[0] + '.jpg'
+                solution_image = pull_image_from_blob(solution_image_name)
+                print('downloading solution image: ' + solution_image_name)
+                cv2.imwrite(solution_image_name, solution_image)
+                break
+
+if __name__ == "__main__":
+    solve()
+    
