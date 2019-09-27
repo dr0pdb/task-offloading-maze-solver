@@ -1,9 +1,9 @@
 FROM continuumio/miniconda2
 
-COPY ../requirements.txt requirements.txt
+COPY environment.yml environment.yml
 
-RUN conda create -n env --file requirements.txt
-RUN echo "source activate env" > ~/.bashrc
+RUN conda env create --file environment.yml
+RUN echo "source activate btpenv" > ~/.bashrc
 ENV PATH /opt/conda/envs/env/bin:$PATH
 
 COPY . .
