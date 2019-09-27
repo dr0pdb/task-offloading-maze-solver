@@ -19,7 +19,7 @@ queue_account_key = 'mxP5vuDMAwrFVBwrbS+WkcmxH780PR/FfoxGKsW6DIPSnRhbshdhw43+b0S
 queue_service = QueueService(queue_account_name, queue_account_key)
 queue_name = 'btpqueue'
 
-use_local = True
+use_local = False
 
 # Pulls the image from azure blob storage.
 def pull_image_from_blob(blob_name):

@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: maze-solver-cloud
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: maze-solver-cloud
+  template:
+    metadata:
+      labels:
+        app: maze-solver-cloud
+    spec:
+      containers:
+      - name: mazesolvercloud
+        image: btpcontainerregistry.azurecr.io/mazesolvercloud:v5
+        imagePullPolicy: Always
+      imagePullSecrets:
+      - name: btpcontainerregistrysecret

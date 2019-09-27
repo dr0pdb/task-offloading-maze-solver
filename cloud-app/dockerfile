@@ -6,5 +6,9 @@ RUN conda env create --file environment.yml
 RUN echo "source activate btpenv" > ~/.bashrc
 ENV PATH /opt/conda/envs/env/bin:$PATH
 
+RUN pip install opencv-python
+RUN pip install azure-storage-blob
+RUN pip install azure-storage-queue
+
 COPY . .
-ENTRYPOINT ['python', [maze_solver_cloud.py]]
+CMD ["python", "maze_solver_cloud.py"]
