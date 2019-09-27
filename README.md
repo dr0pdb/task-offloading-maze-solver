@@ -22,3 +22,10 @@ A batch maze solver implementing Task Offloading in Python using *OpenCV*, *Kube
 
 1. The HPA currently autoscales according to the CPU usage. Look into alternate metrics that can be used. Length of the *Azure Queue* could be a better metric.
 2. Azure secret keys have been stored in the source code. It should be taken a environment variables. Although the keys are no longer valid now so not so important.
+
+### References
+1. [OpenCV docs](https://docs.opencv.org/master/d2/d96/tutorial_py_table_of_contents_imgproc.html)
+2. [Pixabay](https://pixabay.com/) for free images.
+
+
+Liked it? :heart_eyes: Leave a star! :star:
