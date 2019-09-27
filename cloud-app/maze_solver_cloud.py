@@ -27,7 +27,8 @@ while(True):
         print('Solving the maze with name ' + blob_name)
         image_binary = pull_image_from_blob(blob_name)
         solved_image = solve_maze(image_binary)
-        upload_to_blob(blob_name, solved_image)
+        if solved_image is not None:
+            upload_to_blob(blob_name, solved_image)
         queue_service.delete_message(queue_name, message.id, message.pop_receipt)
     
     # Sleep for 10 seconds.
@@ -46,34 +47,42 @@ def pull_image_from_blob(blob_name):
 
 # Takes an image denoting a maze and solves the maze. returns the solved maze.
 def solve_maze(image):
-    gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    try:
+        gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
-    thresholded_image = utils.adaptive_threshold(gray_image, cv2.THRESH_BINARY_INV)
-    _, cnts, _ = cv2.findContours(thresholded_image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        thresholded_image = utils.adaptive_threshold(
+            gray_image, cv2.THRESH_BINARY_INV)
+        print('Finding Contours')
+        contours, _ = cv2.findContours(
+            thresholded_image, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
-    if len(cnts) != 2:
-        print(str(len(cnts)) + " Value Error Unable to solve maze - Failed at Contour finding!")
+        solution_image = np.zeros(gray_image.shape, dtype=np.uint8)
+        cv2.drawContours(solution_image, contours, 0, (255, 255, 255), 5)
 
-    solution_image = np.zeros(gray_image.shape, dtype=np.uint8)
-    cv2.drawContours(solution_image, cnts, 0, (255,255,255),cv2.FILLED)
+        print('Dilation')
+        kernel = np.ones((15, 15),  dtype=np.uint8)
+        solution_image = cv2.dilate(solution_image, kernel)
+        eroded_image = cv2.erode(solution_image, kernel)
+        solution_image = cv2.absdiff(solution_image, eroded_image)
 
-    kernel = np.ones((15, 15),  dtype=np.uint8)
-    solution_image = cv2.dilate(solution_image, kernel)
-    eroded_image = cv2.erode(solution_image, kernel)
-    solution_image = cv2.absdiff(solution_image, eroded_image)
+        b, g, r = cv2.split(image)
+        b &= ~solution_image
+        g |= solution_image
+        r &= ~solution_image
 
-    b,g,r = cv2.split(image)
-    b &= ~solution_image
-    g |= solution_image
-    r &= ~solution_image
+        print('Merging to get the final solution')
+        solution_image = cv2.merge([b, g, r]).astype(np.uint8)
+        return solution_image
+    except Exception:
+        return None
 
-    solution_image = cv2.merge([b,g,r]).astype(np.uint8)
-    return solution_image
+def exists(local_file_name):
+    return block_blob_service.exists(container_name, local_file_name)
 
 # uploads the solution image to azure blob storage.
 def upload_to_blob(blob_name, solution_image):
     # Create a file in Documents to test the upload and download.
-    local_file_name = "result_" + blob_name + ".jpg"
+    local_file_name = "result_" + blob_name
     cv2.imwrite(local_file_name, solution_image)
     local_path=os.path.expanduser(".")
     full_path_to_file =os.path.join(local_path, local_file_name)
@@ -83,7 +92,7 @@ def upload_to_blob(blob_name, solution_image):
     print("\nUploading to Blob storage as blob" + local_file_name)
 
     # Upload the created file if it doesn't exist, use local_file_name for the blob name.
-    if not len(block_blob_service.list_blobs(container_name, local_file_name)):
+    if not exists(local_file_name):
         block_blob_service.create_blob_from_path(container_name, local_file_name, full_path_to_file)
     
     # Delete the temporary solution image after upload
