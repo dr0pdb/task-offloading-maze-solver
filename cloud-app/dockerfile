@@ -1,0 +1,10 @@
+FROM continuumio/miniconda2
+
+COPY ../requirements.txt requirements.txt
+
+RUN conda create -n env --file requirements.txt
+RUN echo "source activate env" > ~/.bashrc
+ENV PATH /opt/conda/envs/env/bin:$PATH
+
+COPY . .
+ENTRYPOINT ['python', [maze_solver_cloud.py]]
