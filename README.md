@@ -1,6 +1,8 @@
 # Batch Maze Solver
 
-A batch maze solver in Python using *OpenCV*, *Kubernetes* and *Azure*. 
+![](readme-resources/delegate.jpg)
+
+A batch maze solver implementing Task Offloading in Python using *OpenCV*, *Kubernetes* and *Azure*. 
 
 **Task Offloading** is the transfer of resource intensive computational tasks to an external platform, such as a cluster, grid, or a cloud. In order to achieve a certain throughput in a system with limited resources, some computationally heavy tasks can be delegated to an external platform. In this project for demonstration purposes, that task is to solve a maze using image processing.
 
