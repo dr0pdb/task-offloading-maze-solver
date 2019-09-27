@@ -111,21 +111,22 @@ def solve():
     if use_local:
         return
 
-    print('Images uploaded successfully!')
-    time.sleep(10*len(images))
-    # print('Downloading solved images from Azure Blob Storage!')
-    # for image in images:
-    #     retry_count = 0
-    #     while retry_count <= 10:
-    #         if not len(block_blob_service.list_blobs(container_name, image[0] + '.jpg')):
-    #             retry_count += 1
-    #             time.sleep(10)
-    #         else:
-    #             solution_image_name = 'solution_' + image[0] + '.jpg'
-    #             solution_image = pull_image_from_blob(solution_image_name)
-    #             print('downloading solution image: ' + solution_image_name)
-    #             cv2.imwrite(solution_image_name, solution_image)
-    #             break
+    print('\nImages uploaded successfully!\n')
+    time.sleep(2*len(images))
+    
+    print('Downloading solved images from Azure Blob Storage!\n')
+    for image in images:
+        retry_count = 0
+        while retry_count <= 10:
+            if not exists('result_' + image[0] + image[1]):
+                retry_count += 1
+                time.sleep(5)
+            else:
+                solution_image_name = 'result_' + image[0] + image[1]
+                solution_image = pull_image_from_blob(solution_image_name)
+                print('downloading solution image: ' + solution_image_name)
+                cv2.imwrite('results/'+ solution_image_name, solution_image)
+                break
 
 if __name__ == "__main__":
     solve()

@@ -19,21 +19,6 @@ queue_account_key = 'mxP5vuDMAwrFVBwrbS+WkcmxH780PR/FfoxGKsW6DIPSnRhbshdhw43+b0S
 queue_service = QueueService(queue_account_name, queue_account_key)
 queue_name = 'btpqueue'
 
-while(True):
-    # Get the messages from the queue.
-    messages = queue_service.get_messages(queue_name, num_messages=5, visibility_timeout=5*60)
-    for message in messages:
-        blob_name = message.content
-        print('Solving the maze with name ' + blob_name)
-        image_binary = pull_image_from_blob(blob_name)
-        solved_image = solve_maze(image_binary)
-        if solved_image is not None:
-            upload_to_blob(blob_name, solved_image)
-        queue_service.delete_message(queue_name, message.id, message.pop_receipt)
-    
-    # Sleep for 10 seconds.
-    time.sleep(10)
-
 # Pulls the image from azure blob storage.
 def pull_image_from_blob(blob_name):
     blob = block_blob_service.get_blob_to_bytes(container_name, blob_name)
@@ -97,3 +82,22 @@ def upload_to_blob(blob_name, solution_image):
     
     # Delete the temporary solution image after upload
     os.remove(full_path_to_file)
+
+
+while(True):
+    # Get the messages from the queue.
+    messages = queue_service.get_messages(
+        queue_name, num_messages=5, visibility_timeout=5*60)
+
+    for message in messages:
+        blob_name = message.content
+        print('Solving the maze with name ' + blob_name)
+        sys.stdout.flush()
+        image_binary = pull_image_from_blob(blob_name)
+        solved_image = solve_maze(image_binary)
+        if solved_image is not None:
+            upload_to_blob(blob_name, solved_image)
+        queue_service.delete_message(
+            queue_name, message.id, message.pop_receipt)
+
+    time.sleep(1)
