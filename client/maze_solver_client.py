@@ -19,7 +19,7 @@ queue_account_key = 'mxP5vuDMAwrFVBwrbS+WkcmxH780PR/FfoxGKsW6DIPSnRhbshdhw43+b0S
 queue_service = QueueService(queue_account_name, queue_account_key)
 queue_name = 'btpqueue'
 
-use_local = False
+use_local = True
 
 # Pulls the image from azure blob storage.
 def pull_image_from_blob(blob_name):
@@ -100,7 +100,7 @@ def solve():
     # image = [filename, extension, binary image]
     for image in images:
         if use_local:
-            solution_image = solve_maze(image[1])
+            solution_image = solve_maze(image[2])
             if solution_image is not None:
                 cv2.imwrite("results/result_" + image[0] + image[1], solution_image)
         else:
