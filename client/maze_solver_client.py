@@ -112,7 +112,7 @@ def solve():
         return
 
     print('\nImages uploaded successfully!\n')
-    time.sleep(2*len(images))
+    time.sleep(60)
     
     print('Downloading solved images from Azure Blob Storage!\n')
     for image in images:
